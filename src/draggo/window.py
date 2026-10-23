@@ -146,7 +146,7 @@ class ShelfWindow(Adw.ApplicationWindow):
         header.pack_end(Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu,
                                        tooltip_text=_("Main Menu")))
 
-        empty = Adw.StatusPage(icon_name="document-send-symbolic", title=_("Drop here"),
+        empty = Adw.StatusPage(icon_name="io.github.albertosusco.Draggo-symbolic", title=_("Drop here"),
                                description=_("Files, links and text wait here until you drag them out again."))
         empty.add_css_class("compact")
         empty.add_css_class("draggo-empty")

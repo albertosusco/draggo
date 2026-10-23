@@ -1,3 +1,5 @@
+<p align="center"><img src="data/icons/hicolor/scalable/apps/io.github.albertosusco.Draggo.svg" width="128" alt=""></p>
+
 # Draggo
 
 **Un cassetto temporaneo per il drag and drop su Linux/GNOME**, ispirato a [Yoink](https://eternalstorms.at/yoink/) per macOS.
