@@ -25,6 +25,7 @@ export default class DraggoExtension extends Extension {
         this._showTimeoutId = 0;
         this._focusNextShelf = false;
         this._trackedWindows = new Map();
+        this._idleIds = new Set();
 
         Main.wm.addKeybinding('toggle-shelf', this._settings, Meta.KeyBindingFlags.NONE,
             Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW,
@@ -52,12 +53,18 @@ export default class DraggoExtension extends Extension {
         this._windowCreatedId = 0;
 
         for (const [window, ids] of this._trackedWindows) {
-            for (const [object, id] of ids)
-                object.disconnect(id);
-            if (this._isDraggoWindow(window) && window.is_above())
-                window.unmake_above();
+            for (const id of ids)
+                window.disconnect(id);
         }
         this._trackedWindows = null;
+        for (const window of this._findShelves()) {
+            window.unmake_above();
+            window.unstick();
+        }
+
+        for (const id of this._idleIds)
+            GLib.source_remove(id);
+        this._idleIds = null;
 
         if (this._showTimeoutId) {
             GLib.source_remove(this._showTimeoutId);
@@ -96,7 +103,8 @@ export default class DraggoExtension extends Extension {
     }
 
     _onToggleShortcut() {
-        const shelf = global.display.list_all_windows().find(w => this._isDraggoWindow(w));
+        console.debug('Draggo: toggle shortcut');
+        const [shelf] = this._findShelves();
         if (shelf && !shelf.has_focus()) {
             // Visible but not focused: bring it to the user instead of hiding it.
             Main.activateWindow(shelf);
@@ -123,6 +131,10 @@ export default class DraggoExtension extends Extension {
             });
     }
 
+    _findShelves() {
+        return global.display.list_all_windows().filter(w => this._isDraggoWindow(w));
+    }
+
     _isDraggoWindow(window) {
         return window.get_gtk_application_id?.() === APP_ID ||
             window.get_wm_class() === APP_ID;
@@ -132,41 +144,46 @@ export default class DraggoExtension extends Extension {
         if (!window || this._trackedWindows.has(window))
             return;
 
-        const ids = [];
-        this._trackedWindows.set(window, ids);
-        ids.push([window, window.connect('unmanaged', () => {
-            for (const [object, id] of ids)
-                object.disconnect(id);
-            this._trackedWindows?.delete(window);
-        })]);
-
-        const actor = window.get_compositor_private();
-        if (alreadyShown || !actor) {
-            this._setupWindow(window, false);
+        if (alreadyShown) {
+            if (this._isDraggoWindow(window))
+                this._setupWindow(window, false);
             return;
         }
-        // The application id and the final size are known once the first
-        // frame has been drawn.
-        const firstFrameId = actor.connect('first-frame', () => {
-            actor.disconnect(firstFrameId);
-            const index = ids.findIndex(([, id]) => id === firstFrameId);
-            if (index >= 0)
-                ids.splice(index, 1);
-            this._setupWindow(window, true);
-        });
-        ids.push([actor, firstFrameId]);
+
+        // A Wayland window does not know its application id yet when it is
+        // created; wait until it is shown to find out whether it is ours.
+        const ids = [];
+        this._trackedWindows.set(window, ids);
+        const untrack = () => {
+            for (const id of ids)
+                window.disconnect(id);
+            this._trackedWindows?.delete(window);
+        };
+        ids.push(window.connect('unmanaged', untrack));
+        ids.push(window.connect('shown', () => {
+            untrack();
+            if (!this._isDraggoWindow(window))
+                return;
+            // Never restack, move or focus a window from inside a mutter
+            // signal handler: doing it while a frame is being painted makes
+            // mutter abort, taking the whole session down with it.
+            let unmanagedId = 0;
+            const sourceId = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                this._idleIds.delete(sourceId);
+                window.disconnect(unmanagedId);
+                this._setupWindow(window, true);
+                return GLib.SOURCE_REMOVE;
+            });
+            this._idleIds.add(sourceId);
+            unmanagedId = window.connect('unmanaged', () => {
+                window.disconnect(unmanagedId);
+                if (this._idleIds?.delete(sourceId))
+                    GLib.source_remove(sourceId);
+            });
+        }));
     }
 
     _setupWindow(window, place) {
-        if (!this._isDraggoWindow(window)) {
-            // Not ours: stop tracking it.
-            const ids = this._trackedWindows.get(window) ?? [];
-            for (const [object, id] of ids)
-                object.disconnect(id);
-            this._trackedWindows.delete(window);
-            return;
-        }
-
         window.make_above();
         if (this._settings.get_boolean('all-workspaces'))
             window.stick();
