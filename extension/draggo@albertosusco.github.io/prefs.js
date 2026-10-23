@@ -1,4 +1,5 @@
 import Adw from 'gi://Adw';
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
@@ -16,6 +17,13 @@ const IT = {
     'Delay before showing (ms)': 'Ritardo prima di mostrarlo (ms)',
     'Ignores very short drags': 'Ignora i trascinamenti molto brevi',
     'Show on all workspaces': 'Mostra su tutti gli spazi di lavoro',
+    'Keyboard shortcut': 'Scorciatoia da tastiera',
+    'Show or hide the shelf': 'Mostra o nasconde il cassetto',
+    'Disabled': 'Disattivata',
+    'Change': 'Modifica',
+    'Reset': 'Ripristina',
+    'Press the new shortcut': 'Premi la nuova scorciatoia',
+    'Esc to cancel, Backspace to disable': 'Esc per annullare, Backspace per disattivarla',
 };
 const italian = GLib.get_language_names()[0].toLowerCase().startsWith('it');
 const _ = s => (italian && IT[s]) || s;
@@ -54,6 +62,73 @@ export default class DraggoPreferences extends ExtensionPreferences {
         settings.bind('all-workspaces', sticky, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(sticky);
 
+        const shortcuts = new Adw.PreferencesGroup({title: _('Keyboard shortcut')});
+        page.add(shortcuts);
+        shortcuts.add(this._shortcutRow(window, settings));
+
         window.add(page);
+    }
+
+    _shortcutRow(window, settings) {
+        const row = new Adw.ActionRow({title: _('Show or hide the shelf')});
+        const label = new Gtk.ShortcutLabel({
+            disabled_text: _('Disabled'),
+            valign: Gtk.Align.CENTER,
+        });
+        const update = () => {
+            label.accelerator = settings.get_strv('toggle-shelf')[0] ?? '';
+        };
+        settings.connect('changed::toggle-shelf', update);
+        update();
+
+        const change = new Gtk.Button({label: _('Change'), valign: Gtk.Align.CENTER});
+        change.connect('clicked', () => this._captureShortcut(window, settings));
+        const reset = new Gtk.Button({
+            icon_name: 'edit-undo-symbolic',
+            tooltip_text: _('Reset'),
+            valign: Gtk.Align.CENTER,
+            css_classes: ['flat'],
+        });
+        reset.connect('clicked', () => settings.reset('toggle-shelf'));
+
+        row.add_suffix(label);
+        row.add_suffix(change);
+        row.add_suffix(reset);
+        return row;
+    }
+
+    _captureShortcut(window, settings) {
+        const dialog = new Adw.Window({
+            transient_for: window,
+            modal: true,
+            default_width: 360,
+            default_height: 180,
+            content: new Adw.StatusPage({
+                title: _('Press the new shortcut'),
+                description: _('Esc to cancel, Backspace to disable'),
+                icon_name: 'preferences-desktop-keyboard-shortcuts-symbolic',
+            }),
+        });
+        const controller = new Gtk.EventControllerKey();
+        controller.connect('key-pressed', (_c, keyval, keycode, state) => {
+            const mods = state & Gtk.accelerator_get_default_mod_mask();
+            if (mods === 0 && keyval === Gdk.KEY_Escape) {
+                dialog.close();
+                return Gdk.EVENT_STOP;
+            }
+            if (mods === 0 && keyval === Gdk.KEY_BackSpace) {
+                settings.set_strv('toggle-shelf', []);
+                dialog.close();
+                return Gdk.EVENT_STOP;
+            }
+            if (!Gtk.accelerator_valid(Gdk.keyval_to_lower(keyval), mods))
+                return Gdk.EVENT_STOP;
+            const accel = Gtk.accelerator_name_with_keycode(null, Gdk.keyval_to_lower(keyval), keycode, mods);
+            settings.set_strv('toggle-shelf', [accel]);
+            dialog.close();
+            return Gdk.EVENT_STOP;
+        });
+        dialog.add_controller(controller);
+        dialog.present();
     }
 }

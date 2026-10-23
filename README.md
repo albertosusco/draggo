@@ -28,6 +28,7 @@ Devi caricare un file su un sito, ma non hai il gestore file e il browser aperti
   - **immagini "grezze"**: salvate come PNG in `~/.local/share/draggo/files` ed eliminate quando escono dal cassetto.
 - Trascina fuori **un elemento alla volta** o **tutti insieme** con la maniglia in alto a sinistra.
 - Sempre in primo piano, su tutti gli spazi di lavoro, accanto al bordo dello schermo.
+- **`Super+Alt+D`** apre o chiude il cassetto anche quando non stai trascinando nulla. La scorciatoia è configurabile.
 - `Ctrl+V` incolla nel cassetto il contenuto degli appunti.
 - Doppio clic su un elemento: lo apre con l'applicazione predefinita.
 - Gli elementi vengono conservati anche dopo un riavvio (si può disattivare dal menu).
@@ -91,7 +92,8 @@ Da quel momento Draggo parte automaticamente al login e compare a ogni trascinam
 - posizione: destra, sinistra o centro;
 - distanza dal bordo;
 - ritardo prima della comparsa, per ignorare trascinamenti brevissimi;
-- visibilità su tutti gli spazi di lavoro.
+- visibilità su tutti gli spazi di lavoro;
+- scorciatoia da tastiera per mostrare o nascondere il cassetto (predefinita `Super+Alt+D`): premi *Modifica* e poi la nuova combinazione. *Backspace* la disattiva.
 
 ## Uso da riga di comando
 
@@ -103,7 +105,7 @@ draggo --background  avvia senza mostrare nulla
 draggo --quit        chiude Draggo
 ```
 
-Se vuoi aprire il cassetto anche senza trascinare nulla, puoi associare `draggo` a una scorciatoia da tastiera in *Impostazioni → Tastiera → Scorciatoie personalizzate*.
+Senza l'estensione, puoi comunque associare `draggo` a una scorciatoia in *Impostazioni → Tastiera → Scorciatoie personalizzate*.
 
 ## Sviluppo
 
@@ -128,7 +130,7 @@ data/            file .desktop, servizio D-Bus, autostart, icone
 
 ## Limitazioni note
 
-- Senza l'estensione, l'app funziona lo stesso, ma il cassetto non compare da solo: va aperto con `draggo` o con una scorciatoia.
+- Senza l'estensione l'app funziona lo stesso, ma il cassetto non compare da solo e `Super+Alt+D` non è disponibile: va aperto con il comando `draggo`.
 - I file vengono conservati come riferimento: se sposti o elimini l'originale, l'elemento viene segnalato come "File non trovato".
 - Quando trascini un'immagine da una pagina web, il browser di solito fornisce il **link** all'immagine e non il file.
 

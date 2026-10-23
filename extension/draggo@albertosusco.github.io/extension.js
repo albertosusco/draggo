@@ -8,6 +8,8 @@
 
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -21,7 +23,12 @@ export default class DraggoExtension extends Extension {
         this._dragging = false;
         this._notified = false;
         this._showTimeoutId = 0;
+        this._focusNextShelf = false;
         this._trackedWindows = new Map();
+
+        Main.wm.addKeybinding('toggle-shelf', this._settings, Meta.KeyBindingFlags.NONE,
+            Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW,
+            () => this._onToggleShortcut());
 
         this._xdndIds = [
             Main.xdndHandler.connect('drag-begin', () => this._onDragBegin()),
@@ -35,6 +42,8 @@ export default class DraggoExtension extends Extension {
     }
 
     disable() {
+        Main.wm.removeKeybinding('toggle-shelf');
+
         for (const id of this._xdndIds)
             Main.xdndHandler.disconnect(id);
         this._xdndIds = null;
@@ -84,6 +93,18 @@ export default class DraggoExtension extends Extension {
             this._notified = false;
             this._activateAction('drag-end');
         }
+    }
+
+    _onToggleShortcut() {
+        const shelf = global.display.list_all_windows().find(w => this._isDraggoWindow(w));
+        if (shelf && !shelf.has_focus()) {
+            // Visible but not focused: bring it to the user instead of hiding it.
+            Main.activateWindow(shelf);
+            return;
+        }
+        // Give the shelf keyboard focus when it appears, so Ctrl+V works.
+        this._focusNextShelf = !shelf;
+        this._activateAction('toggle');
     }
 
     _activateAction(name) {
@@ -151,6 +172,10 @@ export default class DraggoExtension extends Extension {
             window.stick();
         if (place)
             this._placeWindow(window);
+        if (place && this._focusNextShelf) {
+            this._focusNextShelf = false;
+            Main.activateWindow(window);
+        }
         // Mapping a window without focus makes GNOME show a
         // "Draggo is ready" notification; the shelf does not need one.
         window.unset_demands_attention?.();
