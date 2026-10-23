@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Draggo
+GenericName=Drag and Drop Shelf
+GenericName[it]=Cassetto per il drag and drop
+Comment=A temporary shelf for files, links and text you are dragging
+Comment[it]=Un cassetto temporaneo per file, link e testi che stai trascinando
+Exec=@BINDIR@/draggo
+Icon=io.github.albertosusco.Draggo
+Terminal=false
+Categories=Utility;GTK;
+Keywords=drag;drop;shelf;clipboard;yoink;dropover;trascina;cassetto;
+StartupNotify=false
+DBusActivatable=true
+SingleMainWindow=true

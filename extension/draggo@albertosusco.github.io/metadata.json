@@ -1,0 +1,9 @@
+{
+  "uuid": "draggo@albertosusco.github.io",
+  "name": "Draggo",
+  "description": "Shows the Draggo shelf whenever you start dragging files, links or text, and keeps it on top at the edge of the screen. Requires the Draggo app.",
+  "shell-version": ["46", "47", "48", "49", "50", "51"],
+  "settings-schema": "org.gnome.shell.extensions.draggo",
+  "url": "https://github.com/albertosusco/draggo",
+  "version-name": "1.0.0"
+}

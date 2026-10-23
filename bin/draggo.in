@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+import sys
+
+sys.path.insert(0, "@PKGDATADIR@")
+
+from draggo.main import main  # noqa: E402
+
+sys.exit(main())

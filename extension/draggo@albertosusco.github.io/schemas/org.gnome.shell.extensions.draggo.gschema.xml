@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.draggo" path="/org/gnome/shell/extensions/draggo/">
+    <key name="position" type="s">
+      <choices>
+        <choice value="right"/>
+        <choice value="left"/>
+        <choice value="center"/>
+      </choices>
+      <default>'right'</default>
+      <summary>Screen edge where the shelf appears</summary>
+    </key>
+    <key name="margin" type="i">
+      <range min="0" max="200"/>
+      <default>16</default>
+      <summary>Distance of the shelf from the screen edge, in pixels</summary>
+    </key>
+    <key name="show-delay" type="i">
+      <range min="0" max="2000"/>
+      <default>150</default>
+      <summary>Milliseconds a drag must last before the shelf appears</summary>
+    </key>
+    <key name="all-workspaces" type="b">
+      <default>true</default>
+      <summary>Show the shelf on every workspace</summary>
+    </key>
+  </schema>
+</schemalist>

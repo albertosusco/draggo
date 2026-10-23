@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Draggo
+Comment=Start the Draggo shelf in the background
+Exec=@BINDIR@/draggo --background
+Icon=io.github.albertosusco.Draggo
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Delay=2
